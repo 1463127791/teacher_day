@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>教师节专属祝福生成器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/html-to-image"></script>
+  <meta name="description" content="输入名字即可生成专属教师节祝福（可复制文字/下载海报）" />
+  <style>
+    html,body{height:100%}
+    .glass{background:rgba(255,255,255,.7);backdrop-filter:saturate(1.2) blur(8px)}
+  </style>
+</head>
+<body class="min-h-full bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
+  <header class="px-4 py-6 md:px-8">
+    <h1 class="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
+      <span>🎓 教师节专属祝福生成器</span>
+      <span class="text-xs md:text-sm font-normal text-zinc-500">输入名字 → 自动生成祝福，可复制/下载图片</span>
+    </h1>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 md:px-8 pb-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- 左：设置/输入区 -->
+    <section class="md:col-span-1 space-y-4">
+      <!-- 提示条 -->
+      <div id="hint" class="glass rounded-2xl border p-4 text-sm text-zinc-700 hidden"></div>
+
+      <!-- 老师输入名字 -->
+      <div class="glass rounded-2xl border p-4 shadow-sm">
+        <label class="block text-sm font-semibold mb-1">请输入您的称呼或名字</label>
+        <input id="teacherInput" class="w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-400" placeholder="如：王老师 / 王小明" />
+        <p class="mt-2 text-xs text-zinc-500">* 打开链接后的老师只需要填写这一项，其它已为TA准备好。</p>
+      </div>
+
+      <!-- 署名（可锁定） -->
+      <div id="fromBlock" class="glass rounded-2xl border p-4 shadow-sm">
+        <label class="block text-sm font-semibold mb-1">署名（来自谁）</label>
+        <input id="fromInput" class="w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-400" placeholder="如：沈乐" />
+        <p class="mt-2 text-xs text-zinc-500">* 你可以把这个值写进链接里，老师打开时将被锁定。</p>
+      </div>
+
+      <!-- 风格（可锁定） -->
+      <div id="toneBlock" class="glass rounded-2xl border p-4 shadow-sm">
+        <label class="block text-sm font-semibold mb-2">祝福风格</label>
+        <select id="toneSelect" class="w-full rounded-xl border px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-400">
+          <option value="warm">温情</option>
+          <option value="playful">俏皮</option>
+          <option value="classic">古风</option>
+          <option value="short">简短</option>
+        </select>
+      </div>
+
+      <!-- 操作 -->
+      <div class="flex gap-2">
+        <button id="genBtn" class="flex-1 rounded-xl bg-emerald-500 text-white px-4 py-2 font-medium shadow hover:bg-emerald-600">生成祝福</button>
+        <button id="shuffleBtn" class="flex-1 rounded-xl border px-4 py-2 font-medium shadow-sm hover:shadow">换一句</button>
+      </div>
+
+      <!-- 复制/下载 -->
+      <div class="flex gap-2">
+        <button id="copyBtn" class="flex-1 rounded-xl border px-4 py-2 font-medium shadow-sm hover:shadow">复制祝福文字</button>
+        <button id="downloadBtn" class="flex-1 rounded-xl bg-teal-600 text-white px-4 py-2 font-medium shadow hover:bg-teal-700">下载 PNG 海报</button>
+      </div>
+
+      <!-- 生成专属链接（给老师用） -->
+      <div id="linkBuilder" class="glass rounded-2xl border p-4 shadow-sm">
+        <div class="font-semibold mb-1">生成给老师的专属链接</div>
+        <ol class="list-decimal text-sm text-zinc-600 pl-4 space-y-1">
+          <li>先填好上面的 <span class="font-medium">署名</span> 和 <span class="font-medium">风格</span>。</li>
+          <li>点击下方按钮复制链接并发给老师（老师打开后只需输入名字）。</li>
+        </ol>
+        <div class="mt-3 flex gap-2">
+          <button id="makeLinkBtn" class="flex-1 rounded-xl border px-4 py-2 text-sm shadow-sm hover:shadow">复制专属链接</button>
+          <label class="text-xs flex items-center gap-2"><input id="lockSwitch" type="checkbox" class="rounded" checked> 锁定署名/风格</label>
+        </div>
+        <p class="mt-2 text-xs text-zinc-500 break-all" id="linkOut"></p>
+      </div>
+    </section>
+
+    <!-- 右：预览区 -->
+    <section class="md:col-span-2">
+      <div class="relative">
+        <div class="pointer-events-none absolute -inset-6 -z-10 blur-2xl opacity-70">
+          <div id="bgGrad" class="h-full w-full rounded-[2rem] bg-gradient-to-br from-rose-200 via-amber-200 to-emerald-200"></div>
+        </div>
+
+        <div id="card" class="overflow-hidden rounded-[2rem] border bg-white shadow-xl" style="width: 960px; max-width: 100%">
+          <div class="relative">
+            <div class="h-24 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="text-white/95 drop-shadow text-3xl md:text-4xl font-extrabold tracking-wider">教师节快乐</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-5">
+            <div class="md:col-span-2 p-8 flex items-center justify-center">
+              <svg viewBox="0 0 300 300" class="w-72 h-72 opacity-90">
+                <rect x="40" y="40" width="220" height="160" rx="12" fill="#1f2937" />
+                <rect x="35" y="200" width="230" height="16" rx="4" fill="#d4b08c" />
+                <g stroke="#fff" stroke-width="2" stroke-linecap="round">
+                  <path d="M70 90c20-10 40 10 60 0 20-10 40 10 60 0" opacity=".8" />
+                  <path d="M70 115h140" opacity=".6" />
+                  <path d="M70 140h120" opacity=".5" />
+                  <path d="M70 165h90" opacity=".4" />
+                  <circle cx="210" cy="165" r="10" fill="none" opacity=".7" />
+                </g>
+                <circle cx="120" cy="230" r="12" fill="#ef4444" />
+                <rect x="118" y="212" width="4" height="6" rx="1" fill="#16a34a" />
+              </svg>
+            </div>
+            <div class="md:col-span-3 p-8">
+              <h2 class="text-xl md:text-2xl font-bold tracking-tight"><span id="teacherLabel">亲爱的老师</span>：</h2>
+              <p id="message" class="text-zinc-700 leading-relaxed text-base md:text-lg whitespace-pre-wrap mt-3"></p>
+              <div class="mt-3 text-sm text-zinc-500">— 来自 <span id="fromLabel" class="font-semibold text-zinc-700"></span></div>
+              <div class="mt-4 grid grid-cols-3 gap-2 text-xs text-zinc-500">
+                <div class="rounded-lg border p-2">📚 感谢您的耐心与守护</div>
+                <div class="rounded-lg border p-2">✏️ 三尺讲台，写满光亮</div>
+                <div class="rounded-lg border p-2">🌟 桃李不言，下自成蹊</div>
+              </div>
+            </div>
+          </div>
+          <div class="p-6 flex items-center justify-between text-xs text-zinc-500 border-t bg-zinc-50/60">
+            <span>祝福卡 • 自动生成 · 可下载分享</span>
+            <span>Made with ❤️</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 纯文本预览 -->
+      <div class="mt-4 glass rounded-2xl border p-4">
+        <div class="text-sm font-semibold mb-2">祝福文字（可直接复制发送）</div>
+        <pre id="textOut" class="whitespace-pre-wrap text-sm text-zinc-700"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const templates = {
+      warm: [
+        "{T}，愿每一束粉笔灰，都开成您心里的小花。{Y}祝您教师节快乐！",
+        "{T}，您用耐心点亮了我的好奇心。{Y}在这特别的日子里，送上最真挚的感谢！",
+        "三尺讲台，一片赤诚。{Y}想对{T}说：有您，真好！教师节快乐。",
+        "您教会我们的不止是答案，还有面对世界的勇气。{Y}祝{T}节日快乐，万事胜意！",
+        "粉笔写下的是知识，您刻下的是方向。{Y}愿{T}被温柔以待，教师节快乐！",
+        "春风化雨润桃李，灯火可亲照前路。{Y}敬祝{T}节日快乐。",
+      ],
+      playful: [
+        "{T}，作业我可能会鸽，但对您的敬爱永不迟到！{Y}祝您教师节快乐~",
+        "课堂上最会点亮灵感的人是您！{Y}携一大捧崇拜送给{T}，节日快乐！",
+        "今天的题目：用一个词夸{T}。答案：满分！{Y}祝您教师节快乐！",
+        "上课铃是BGM，您是主角光环。{Y}祝{T}每天都被好运包围~",
+        "{T}，您讲的知识我都“Ctrl+S”在心里了！{Y}教师节快乐！",
+        "给{T}递上100分的快乐与好运，{Y}在此祝您节日超开心！",
+      ],
+      classic: [
+        "桃李不言，下自成蹊。{Y}谨以寸心敬献{T}，祝教师节安康。",
+        "一日为师，终身为范。{Y}祝{T}春晖遍泽，节日吉祥。",
+        "经师易遇，人师难求。{Y}敬祝{T}德艺长春、福安康宁。",
+        "教以人道，化以春风。{Y}愿{T}阖家美满，节序安和。",
+        "杏坛耕耘，桃李满园。{Y}恭祝{T}教祺日绵、万事称心。",
+        "黑白粉笔，书万卷道义；尺素寸心，献一份感恩。{Y}祝{T}节日安好。",
+      ],
+      short: [
+        "{T}，教师节快乐！{Y}感恩有您。",
+        "谢谢您，{T}。{Y}祝节日快乐、顺心常在！",
+        "向{T}致礼：教师节安康。{Y}",
+        "敬爱的{T}，节日快乐！{Y}诸事顺遂。",
+        "祝{T}教师节快乐，平安喜乐！{Y}",
+        "{Y}在此向{T}道声：辛苦了！",
+      ],
+    };
+
+    const gradients = {
+      warm: "from-rose-300 via-amber-200 to-emerald-200",
+      playful: "from-indigo-200 via-sky-200 to-pink-200",
+      classic: "from-stone-100 via-amber-100 to-stone-200",
+      short: "from-emerald-100 via-emerald-200 to-teal-200",
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const teacherInput = $("teacherInput");
+    const fromInput = $("fromInput");
+    const toneSelect = $("toneSelect");
+    const teacherLabel = $("teacherLabel");
+    const fromLabel = $("fromLabel");
+    const messageEl = $("message");
+    const textOut = $("textOut");
+    const bgGrad = $("bgGrad");
+
+    let variant = 0;
+
+    function renderMessage() {
+      const t = toneSelect.value || 'warm';
+      const list = templates[t];
+      const raw = list[variant % list.length];
+      const T = (teacherInput.value || '老师').replace(/\s+/g,'');
+      const from = (fromInput.value || '我').replace(/\s+/g,'');
+      const Y = `🌟${from}🌟`;
+      const msg = raw.replaceAll('{T}', T).replaceAll('{Y}', Y);
+
+      teacherLabel.textContent = T.includes('老师') ? T : T + '老师';
+      fromLabel.textContent = from;
+      messageEl.textContent = msg;
+      textOut.textContent = `【${teacherLabel.textContent}】\n` + msg + `\n— 来自 ${from}`;
+
+      bgGrad.className = `h-full w-full rounded-[2rem] bg-gradient-to-br ${gradients[t]}`;
+    }
+
+    function copy(text){
+      return navigator.clipboard.writeText(text);
+    }
+
+    function toPNG(){
+      const node = document.getElementById('card');
+      return htmlToImage.toPng(node, { pixelRatio: 2, cacheBust: true, backgroundColor: 'white' });
+    }
+
+    function buildShareLink(lock=true){
+      const url = new URL(window.location.href);
+      url.searchParams.set('tone', toneSelect.value || 'warm');
+      if (fromInput.value) url.searchParams.set('from', fromInput.value);
+      else url.searchParams.delete('from');
+      url.searchParams.delete('n'); // 老师名留给老师填写
+      if (lock) url.searchParams.set('lock','1'); else url.searchParams.delete('lock');
+      return url.toString();
+    }
+
+    function applyURLParams(){
+      const p = new URLSearchParams(location.search);
+      const n = p.get('n'); // teacher name (optional prefill)
+      const from = p.get('from');
+      const tone = p.get('tone');
+      const lock = p.has('lock');
+
+      if (n) teacherInput.value = decodeURIComponent(n);
+      if (from) fromInput.value = decodeURIComponent(from);
+      if (tone && ['warm','playful','classic','short'].includes(tone)) toneSelect.value = tone;
+
+      // 锁定模式：面向老师，收起多余选项
+      if (lock) {
+        document.getElementById('fromBlock').classList.add('hidden');
+        document.getElementById('toneBlock').classList.add('hidden');
+        document.getElementById('linkBuilder').classList.add('hidden');
+        const hint = document.getElementById('hint');
+        hint.textContent = '请在上方输入您的称呼或名字，系统将为您生成一段专属教师节祝福，并可一键复制/下载海报。';
+        hint.classList.remove('hidden');
+      }
+
+      renderMessage();
+    }
+
+    // 事件绑定
+    document.getElementById('genBtn').addEventListener('click', renderMessage);
+    document.getElementById('shuffleBtn').addEventListener('click', ()=>{ variant++; renderMessage(); });
+    document.getElementById('copyBtn').addEventListener('click', ()=> copy(textOut.textContent).then(()=>{
+      alert('已复制祝福文字');
+    }));
+    document.getElementById('downloadBtn').addEventListener('click', ()=>{
+      toPNG().then(url=>{
+        const a = document.createElement('a');
+        const n = (teacherInput.value || '专属祝福').replace(/\s/g,'');
+        a.download = `教师节祝福_${n}.png`;
+        a.href = url; a.click();
+      }).catch(()=> alert('导出失败，请重试/更换浏览器'))
+    });
+
+    document.getElementById('makeLinkBtn').addEventListener('click', ()=>{
+      const lock = document.getElementById('lockSwitch').checked;
+      const link = buildShareLink(lock);
+      document.getElementById('linkOut').textContent = link;
+      copy(link).then(()=> alert('已复制专属链接，可直接发给老师'));
+    });
+
+    // 初始化
+    applyURLParams();
+  </script>
+</body>
+</html>
